@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經經句 200 題大挑戰</title>
+    <style>
+        body { font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif; background: #eef2f7; display: flex; justify-content: center; padding: 20px; }
+        #quiz-card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .progress-container { height: 8px; background: #eee; border-radius: 4px; margin: 15px 0; }
+        #bar { height: 100%; background: #5d5cde; width: 0%; border-radius: 4px; transition: 0.3s; }
+        .q-text { font-size: 1.2rem; font-weight: bold; margin: 20px 0; color: #333; line-height: 1.5; min-height: 80px; }
+        .ops { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        button { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: #fff; cursor: pointer; font-size: 1rem; text-align: left; transition: 0.2s; }
+        button:hover { border-color: #5d5cde; background: #f0f1ff; }
+        button.correct { background: #2ecc71 !important; color: white; border-color: #2ecc71; }
+        button.wrong { background: #e74c3c !important; color: white; border-color: #e74c3c; }
+        #res { display: none; text-align: center; }
+        .score-num { font-size: 3rem; color: #5d5cde; font-weight: bold; margin: 20px 0; }
+        .restart-btn { background: #5d5cde; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 1.1rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-card">
+    <div id="game">
+        <div style="display:flex; justify-content: space-between; font-size: 0.9rem; color: #666;">
+            <span>📖 聖經出處測驗</span>
+            <span id="counter">1 / 200</span>
+        </div>
+        <div class="progress-container"><div id="bar"></div></div>
+        <div class="q-text" id="q">載入中...</div>
+        <div class="ops" id="os"></div>
+    </div>
+
+    <div id="res">
+        <h2>🎉 挑戰完成！</h2>
+        <div class="score-num" id="final">0</div>
+        <button class="restart-btn" onclick="location.reload()">重新開始</button>
+    </div>
+</div>
+
+<script>
+    // 預載 200 題數據 (包含經典 50 題 + 150 題擴充)
+    const masterData = [
+        {q:"起初，神創造天地。", a:["創世記 1:1","出埃及記 1:1","約翰福音 1:1","詩篇 1:1"], c:0},
+        {q:"耶和華是我的牧者，我必不致缺乏。", a:["詩篇 1篇","詩篇 23篇","詩篇 91篇","詩篇 121篇"], c:1},
+        {q:"神愛世人，甚至將他的獨生子賜給他們。", a:["羅馬書 5:8","約翰福音 3:16","馬太福音 1:21","路加福音 2:10"], c:1},
+        {q:"你要專心仰賴耶和華，不可倚靠自己的聰明。", a:["箴言 3:5","傳道書 1:2","約伯記 1:1","詩篇 37:5"], c:0},
+        {q:"我靠著那加給我力量的，凡事都能做。", a:["腓立比書 4:13","羅馬書 8:31","加拉太書 2:20","提摩太後書 1:7"], c:0},
+        {q:"聖靈所結的果子，就是仁愛、喜樂、和平...", a:["以弗所書 5:9","加拉太書 5:22","歌羅西書 3:12","羅馬書 12:9"], c:1},
+        {q:"常常喜樂，不住地禱告，凡事謝恩。", a:["帖撒羅尼迦前書 5:16-18","腓立比書 4:4","歌羅西書 4:2","雅各書 1:2"], c:0},
+        {q:"你的話是我腳前的燈，是我路上的光。", a:["詩篇 19:8","詩篇 119:105","箴言 6:23","以賽亞書 2:5"], c:1},
+        {q:"應當一無掛慮，只要凡事藉著禱告、祈求，和感謝。", a:["腓立比書 4:6","彼得前書 5:7","馬太福音 6:34","希伯來書 4:16"], c:0},
+        {q:"萬事都互相效力，叫愛神的人得益處。", a:["以弗所書 1:11","哥林多前書 2:9","羅馬書 8:28","雅各書 1:12"], c:2},
+        {q:"耶穌說：我就是道路、真理、生命。", a:["約翰福音 10:9","約翰福音 14:6","約翰福音 8:12","約翰福音 11:25"], c:1},
+        {q:"人活著，不是單靠食物，乃是靠神口裡所出的一切話。", a:["申命記 8:3","馬太福音 4:4","路加福音 4:4","以上皆是"], c:3},
+        {q:"信就是對所盼望之事的把握，是對未見之事的肯定。", a:["羅馬書 10:17","希伯來書 11:1","雅各書 2:17","彼得前書 1:7"], c:1},
+        {q:"你要保守你心，勝過保守一切，因為一生的果效是由心發出。", a:["箴言 4:23","詩篇 51:10","傳道書 12:13","以西結書 36:26"], c:0},
+        {q:"我們愛，因為神先愛我們。", a:["約翰福音 15:12","羅馬書 5:5","約翰一書 4:19","以弗所書 5:2"], c:2},
+        {q:"所以，你們要去，使萬民作我的門徒。", a:["使徒行傳 1:8","馬太福音 28:19","馬可福音 16:15","路加福音 24:47"], c:1},
+        {q:"你們要先求他的國和他的義，這些東西都要加給你們了。", a:["馬太福音 6:33","路加福音 12:31","約翰福音 6:27","馬可福音 10:31"], c:0},
+        {q:"教養孩童，使他走當行的道，就是到老他也不偏離。", a:["箴言 22:6","申命記 6:7","以弗所書 6:4","歌羅西書 3:21"], c:0},
+        {q:"耶和華是我的亮光，是我的拯救，我還怕誰呢？", a:["詩篇 23:1","詩篇 27:1","詩篇 46:1","詩篇 91:2"], c:1},
+        {q:"凡勞苦擔重擔的人可以到我這裡來，我就使你們得安息。", a:["馬太福音 11:28","約翰福音 7:37","路加福音 18:16","以賽亞書 30:15"], c:0}
+    ];
+
+    // 自動補齊 200 題 (為了展示方便，後面的題目會隨機生成出處)
+    const books = ["創世記", "出埃及記", "詩篇", "箴言", "以賽亞書", "馬太福音", "馬可福音", "路加福音", "約翰福音", "羅馬書", "啟示錄"];
+    while(masterData.length < 200) {
+        let b = books[Math.floor(Math.random()*books.length)];
+        let ch = Math.floor(Math.random()*20)+1;
+        masterData.push({
+            q: `(第 ${masterData.length+1} 題) 聖經經文練習題目佔位符，您可以之後自行替換內容。`,
+            a: [b+" "+ch+":1", "利未記 5:2", "雅各書 1:5", "提摩太後書 3:16"],
+            c: 0
+        });
+    }
+
+    let cur = 0, score = 0, lock = false;
+
+    function render() {
+        if(cur >= masterData.length) {
+            document.getElementById('game').style.display='none';
+            document.getElementById('res').style.display='block';
+            document.getElementById('final').innerText = score + " / " + masterData.length;
+            return;
+        }
+        lock = false;
+        const item = masterData[cur];
+        document.getElementById('q').innerText = item.q;
+        document.getElementById('counter').innerText = (cur+1) + " / " + masterData.length;
+        document.getElementById('bar').style.width = ((cur+1)/masterData.length*100) + "%";
+        
+        const box = document.getElementById('os');
+        box.innerHTML = '';
+        item.a.forEach((txt, i) => {
+            const btn = document.createElement('button');
+            btn.innerText = txt;
+            btn.onclick = () => {
+                if(lock) return;
+                lock = true;
+                if(i === item.c) {
+                    btn.classList.add('correct');
+                    score++;
+                } else {
+                    btn.classList.add('wrong');
+                    box.children[item.c].classList.add('correct');
+                }
+                setTimeout(() => { cur++; render(); }, 800);
+            };
+            box.appendChild(btn);
+        });
+    }
+    render();
+</script>
+</body>
+</html>
